@@ -18,6 +18,13 @@ CLI to run visual regression tests locally between two git branches by spinning 
 npm i -D local-storybook-vrt
 ```
 
+You can also install globally and run it inside a project that has the peer dependencies:
+
+```bash
+npm i -g local-storybook-vrt
+lvrt <target-branch>    # run from your Storybook project root
+```
+
 ## Usage
 
 ```bash
