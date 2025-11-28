@@ -3,14 +3,14 @@
   "version": "0.1.1",
   "description": "ローカル環境でブランチ間のStorybookビジュアルリグレッションテストを行うCLI",
   "bin": {
-    "lvrt": "bin/lvrt.js"
+    "lsvrt": "bin/lsvrt.js"
   },
   "type": "module",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "lint": "node --check bin/lvrt.js"
+    "lint": "node --check bin/lsvrt.js"
   },
   "keywords": [
     "storybook",

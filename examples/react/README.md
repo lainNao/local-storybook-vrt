@@ -20,7 +20,7 @@ Before running VRT, create a branch, make a visible UI change, and commit it. Th
 npm run storybook
 
 # VRT: current branch vs target branch
-npm run vrt -- <target-branch>
+npx lsvrt <target-branch>
 ```
 
-Captures and reg-suit working files are stored under `.lvrt/`.
+Captures and reg-suit working files are stored under `.lsvrt/`.

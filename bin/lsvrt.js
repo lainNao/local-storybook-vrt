@@ -6,14 +6,18 @@ import { once } from "events";
 import { setTimeout as delay } from "timers/promises";
 import simpleGit from "simple-git";
 
-const PORT = Number(process.env.LVRT_PORT || 6006);
-const STORYBOOK_COMMAND = (process.env.LVRT_STORYBOOK_COMMAND || "storybook dev").split(" ");
-const STORYCAP_OPTIONS = process.env.LVRT_STORYCAP_OPTIONS ? process.env.LVRT_STORYCAP_OPTIONS.split(" ") : [];
+const PORT = Number(process.env.LSVRT_PORT || 6006);
+const STORYBOOK_COMMAND = (
+  process.env.LSVRT_STORYBOOK_COMMAND || "storybook dev"
+).split(" ");
+const STORYCAP_OPTIONS = process.env.LSVRT_STORYCAP_OPTIONS
+  ? process.env.LSVRT_STORYCAP_OPTIONS.split(" ")
+  : [];
 
 async function main() {
   const targetBranch = process.argv[2];
   if (!targetBranch) {
-    console.error("Usage: lvrt <target-branch>");
+    console.error("Usage: lsvrt <target-branch>");
     process.exit(1);
   }
 
@@ -31,14 +35,16 @@ async function main() {
   }
 
   if (status.files.length > 0) {
-    console.warn("⚠️ Uncommitted changes detected. Please commit or stash before running.");
+    console.warn(
+      "⚠️ Uncommitted changes detected. Please commit or stash before running."
+    );
   }
 
   await ensureBranchExists(targetBranch);
 
   const cwd = process.cwd();
-  const captureRoot = path.join(cwd, ".lvrt", "capture");
-  const regRoot = path.join(cwd, ".lvrt", "reg-work");
+  const captureRoot = path.join(cwd, ".lsvrt", "capture");
+  const regRoot = path.join(cwd, ".lsvrt", "reg-work");
   const baseDir = path.join(captureRoot, sanitizeBranchName(baseBranch));
   const targetDir = path.join(captureRoot, sanitizeBranchName(targetBranch));
 
@@ -76,13 +82,23 @@ async function captureBranch(branch, outputDir, { checkout }) {
   await fs.rm(outputDir, { recursive: true, force: true });
   await fs.mkdir(outputDir, { recursive: true });
 
-  const storybook = spawn("npx", [...STORYBOOK_COMMAND, "-p", String(PORT), "--disable-telemetry", "--ci"], {
-    stdio: "inherit"
-  });
+  const storybook = spawn(
+    "npx",
+    [...STORYBOOK_COMMAND, "-p", String(PORT), "--disable-telemetry", "--ci"],
+    {
+      stdio: "inherit",
+    }
+  );
 
   try {
     await waitForStorybook(PORT);
-    await runCommand("npx", ["storycap", `http://localhost:${PORT}`, "--outDir", outputDir, ...STORYCAP_OPTIONS]);
+    await runCommand("npx", [
+      "storycap",
+      `http://localhost:${PORT}`,
+      "--outDir",
+      outputDir,
+      ...STORYCAP_OPTIONS,
+    ]);
   } finally {
     storybook.kill("SIGTERM");
     await once(storybook, "exit").catch(() => {});
@@ -105,7 +121,11 @@ async function waitForStorybook(port) {
     await delay(1500);
   }
 
-  throw new Error(`Storybook did not start on port ${port}: ${lastError?.message || "unknown"}`);
+  throw new Error(
+    `Storybook did not start on port ${port}: ${
+      lastError?.message || "unknown"
+    }`
+  );
 }
 
 async function runRegSuit({ baseDir, targetDir, regRoot }) {
@@ -116,16 +136,18 @@ async function runRegSuit({ baseDir, targetDir, regRoot }) {
       actualDir: baseDir,
       expectedDir: targetDir,
       thresholdRate: 0,
-      thresholdPixel: 0
+      thresholdPixel: 0,
     },
-    plugins: {}
+    plugins: {},
   };
 
   await fs.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
   const expectedDir = path.join(regRoot, "expected");
   await fs.rm(expectedDir, { recursive: true, force: true });
   await fs.cp(targetDir, expectedDir, { recursive: true });
-  await runCommand("npx", ["reg-suit", "run", "--config", configPath], { stdio: "inherit" });
+  await runCommand("npx", ["reg-suit", "run", "--config", configPath], {
+    stdio: "inherit",
+  });
   const report = path.join(regRoot, "index.html");
   try {
     await fs.access(report);
@@ -151,14 +173,21 @@ function runCommand(command, args, options = {}) {
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`${command} ${args.join(" ")} failed with code ${code}`));
+        reject(
+          new Error(`${command} ${args.join(" ")} failed with code ${code}`)
+        );
       }
     });
   });
 }
 
 async function openReport(filePath) {
-  const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
+  const opener =
+    process.platform === "darwin"
+      ? "open"
+      : process.platform === "win32"
+      ? "cmd"
+      : "xdg-open";
   const args =
     opener === "open"
       ? [filePath]

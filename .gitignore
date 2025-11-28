@@ -1,5 +1,5 @@
 node_modules
-.lvrt
+.lsvrt
 .DS_Store
 npm-debug.log*
 yarn-error.log*
