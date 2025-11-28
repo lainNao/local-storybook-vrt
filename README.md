@@ -11,10 +11,11 @@ CLI to run visual regression tests locally between two git branches by spinning 
   - `storybook@^7` (install in your project)
   - `local-storybook-vrt` bundles `storycap` and `reg-suit`, so you don’t need to add them yourself.
 
-## Install
+## Install and Run
 
 ```bash
 npm i -D local-storybook-vrt
+npx lsvrt <target-branch>
 ```
 
 You can also install globally and run it inside a project that has the peer dependencies:
@@ -25,10 +26,6 @@ lsvrt <target-branch>    # run from your Storybook project root
 ```
 
 ## Usage
-
-```bash
-lsvrt <target-branch>
-```
 
 1. Starts Storybook on port 6006 for the current branch, captures with `storycap` into `.lsvrt/capture/<current-branch>`.
 2. Checks out the target branch and captures into `.lsvrt/capture/<target-branch>`.
@@ -44,5 +41,5 @@ lsvrt <target-branch>
 ## Notes
 
 - Because branches are switched via `git`, stash or commit uncommitted changes beforehand.
-- Storybook is started via `npx storybook dev` (or override with env var). Ensure Storybook, storycap, and reg-suit are installed in your project.
+- Storybook is started via `npx storybook dev` (or override with env var). Ensure Storybook is installed in your project.
 - Captures and reg-suit working files live under `.lsvrt/`; add to `.gitignore` as needed.
