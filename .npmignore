@@ -1,0 +1,12 @@
+# Development and repo-only files
+.github/
+examples/
+.vscode/
+.lsvrt/
+.lvrt/
+node_modules/
+package-lock.json
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*

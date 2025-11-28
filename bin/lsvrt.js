@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "fs/promises";
 import path from "path";
+import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 import { once } from "events";
 import { setTimeout as delay } from "timers/promises";
@@ -13,6 +14,8 @@ const STORYBOOK_COMMAND = (
 const STORYCAP_OPTIONS = process.env.LSVRT_STORYCAP_OPTIONS
   ? process.env.LSVRT_STORYCAP_OPTIONS.split(" ")
   : [];
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const BIN_DIR = path.resolve(__dirname, "../node_modules/.bin");
 
 async function main() {
   const targetBranch = process.argv[2];
@@ -93,8 +96,7 @@ async function captureBranch(branch, outputDir, { checkout }) {
 
   try {
     await waitForStorybook(PORT);
-    await runCommand("npx", [
-      "storycap",
+    await runLocalBin("storycap", [
       `http://localhost:${PORT}`,
       "--outDir",
       outputDir,
@@ -146,7 +148,7 @@ async function runRegSuit({ baseDir, targetDir, regRoot }) {
   const expectedDir = path.join(regRoot, "expected");
   await fs.rm(expectedDir, { recursive: true, force: true });
   await fs.cp(targetDir, expectedDir, { recursive: true });
-  await runCommand("npx", ["reg-suit", "run", "--config", configPath], {
+  await runLocalBin("reg-suit", ["run", "--config", configPath], {
     stdio: "inherit",
   });
   const report = path.join(regRoot, "index.html");
@@ -164,6 +166,24 @@ function sanitizeBranchName(name) {
 
 async function runGit(args) {
   return runCommand("git", args, { stdio: "inherit" });
+}
+
+function resolveBin(binName) {
+  const bin = path.join(
+    BIN_DIR,
+    process.platform === "win32" ? `${binName}.cmd` : binName
+  );
+  return fs
+    .access(bin)
+    .then(() => bin)
+    .catch(() => null);
+}
+
+async function runLocalBin(binName, args, options = {}) {
+  const resolved = await resolveBin(binName);
+  const cmd = resolved || "npx";
+  const finalArgs = resolved ? args : [binName, ...args];
+  return runCommand(cmd, finalArgs, options);
 }
 
 function runCommand(command, args, options = {}) {
