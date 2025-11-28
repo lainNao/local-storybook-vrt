@@ -122,6 +122,9 @@ async function runRegSuit({ baseDir, targetDir, regRoot }) {
   };
 
   await fs.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
+  const expectedDir = path.join(regRoot, "expected");
+  await fs.rm(expectedDir, { recursive: true, force: true });
+  await fs.cp(targetDir, expectedDir, { recursive: true });
   await runCommand("npx", ["reg-suit", "run", "--config", configPath], { stdio: "inherit" });
   const report = path.join(regRoot, "index.html");
   try {
