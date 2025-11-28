@@ -16,9 +16,15 @@ const STORYCAP_OPTIONS = process.env.LSVRT_STORYCAP_OPTIONS
   : [];
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_BIN_DIR = path.resolve(__dirname, "../node_modules/.bin");
-const CWD_BIN_DIR = path.resolve(process.cwd(), "node_modules/.bin");
 
 async function main() {
+  try {
+    await ensureRequiredBinaries();
+  } catch (err) {
+    console.error(err.message || err);
+    process.exit(1);
+  }
+
   const targetBranch = process.argv[2];
   if (!targetBranch) {
     console.error("Usage: lsvrt <target-branch>");
@@ -88,11 +94,9 @@ async function captureBranch(branch, outputDir, { checkout }) {
   await fs.mkdir(outputDir, { recursive: true });
 
   const storybook = spawn(
-    "npx",
-    [...STORYBOOK_COMMAND, "-p", String(PORT), "--disable-telemetry", "--ci"],
-    {
-      stdio: "inherit",
-    }
+    await resolveCommand(STORYBOOK_COMMAND[0]),
+    [...STORYBOOK_COMMAND.slice(1), "-p", String(PORT), "--disable-telemetry", "--ci"],
+    { stdio: "inherit" }
   );
 
   try {
@@ -170,11 +174,7 @@ async function runGit(args) {
 }
 
 async function resolveBin(binName) {
-  const candidates = [CWD_BIN_DIR, PACKAGE_BIN_DIR].map((dir) =>
-    path.join(dir, process.platform === "win32" ? `${binName}.cmd` : binName)
-  );
-
-  for (const bin of candidates) {
+  for (const bin of buildBinCandidates(binName)) {
     try {
       await fs.access(bin);
       return bin;
@@ -190,6 +190,63 @@ async function runLocalBin(binName, args, options = {}) {
   const cmd = resolved || "npx";
   const finalArgs = resolved ? args : [binName, ...args];
   return runCommand(cmd, finalArgs, options);
+}
+
+async function resolveCommand(command) {
+  return (await resolveBin(command)) || command;
+}
+
+function buildBinCandidates(binName) {
+  const seen = new Set();
+  const binFile =
+    process.platform === "win32" ? `${binName}.cmd` : binName;
+  const dirs = [
+    ...walkNodeModulesBin(process.cwd()),
+    ...walkNodeModulesBin(__dirname),
+  ];
+  const explicit = [PACKAGE_BIN_DIR];
+  for (const dir of explicit) {
+    dirs.push(dir);
+  }
+
+  return dirs
+    .map((dir) => path.join(dir, binFile))
+    .filter((bin) => {
+      if (seen.has(bin)) return false;
+      seen.add(bin);
+      return true;
+    });
+}
+
+function* walkNodeModulesBin(startDir) {
+  let current = startDir;
+  while (true) {
+    yield path.join(current, "node_modules/.bin");
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+}
+
+async function ensureRequiredBinaries() {
+  const required = ["storycap", "reg-suit"];
+  const missing = [];
+
+  for (const bin of required) {
+    const resolved = await resolveBin(bin);
+    if (!resolved) {
+      missing.push(bin);
+    }
+  }
+
+  if (missing.length > 0) {
+    const list = missing.join(", ");
+    throw new Error(
+      `必要な CLI が見つかりませんでした: ${list}\n` +
+        "カレントディレクトリから上位階層の node_modules/.bin および lsvrt パッケージ内を探索しました。\n" +
+        "モノレポの場合はワークスペースのルートで依存をインストールし、再度実行してください。"
+    );
+  }
 }
 
 function runCommand(command, args, options = {}) {
