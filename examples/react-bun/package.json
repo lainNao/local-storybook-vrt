@@ -1,0 +1,31 @@
+{
+  "name": "local-storybook-vrt-react-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "vrt": "lsvrt"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@storybook/react-vite": "^8.6.14",
+    "@storybook/test": "^8.6.14",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.0.4",
+    "globals": "^16.5.0",
+    "local-storybook-vrt": "file:../..",
+    "storybook": "^8.6.14",
+    "typescript": "~5.9.3",
+    "vite": "^6.0.11"
+  }
+}
