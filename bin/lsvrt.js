@@ -15,7 +15,8 @@ const STORYCAP_OPTIONS = process.env.LSVRT_STORYCAP_OPTIONS
   ? process.env.LSVRT_STORYCAP_OPTIONS.split(" ")
   : [];
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const BIN_DIR = path.resolve(__dirname, "../node_modules/.bin");
+const PACKAGE_BIN_DIR = path.resolve(__dirname, "../node_modules/.bin");
+const CWD_BIN_DIR = path.resolve(process.cwd(), "node_modules/.bin");
 
 async function main() {
   const targetBranch = process.argv[2];
@@ -168,15 +169,20 @@ async function runGit(args) {
   return runCommand("git", args, { stdio: "inherit" });
 }
 
-function resolveBin(binName) {
-  const bin = path.join(
-    BIN_DIR,
-    process.platform === "win32" ? `${binName}.cmd` : binName
+async function resolveBin(binName) {
+  const candidates = [CWD_BIN_DIR, PACKAGE_BIN_DIR].map((dir) =>
+    path.join(dir, process.platform === "win32" ? `${binName}.cmd` : binName)
   );
-  return fs
-    .access(bin)
-    .then(() => bin)
-    .catch(() => null);
+
+  for (const bin of candidates) {
+    try {
+      await fs.access(bin);
+      return bin;
+    } catch {
+      // continue searching
+    }
+  }
+  return null;
 }
 
 async function runLocalBin(binName, args, options = {}) {
