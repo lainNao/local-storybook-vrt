@@ -7,10 +7,9 @@ CLI to run visual regression tests locally between two git branches by spinning 
 
 - Node.js 18+
 - git (used to switch branches)
-- Peer dependencies (add to your project, e.g., devDependencies)
-  - `storybook@^7`
-  - `storycap@^3`
-  - `reg-suit@^0.10`
+- Peer dependency
+  - `storybook@^7` (install in your project)
+  - `local-storybook-vrt` bundles `storycap` and `reg-suit`, so you don’t need to add them yourself.
 
 ## Install
 

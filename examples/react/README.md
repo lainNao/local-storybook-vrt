@@ -7,8 +7,7 @@ If you work with this monorepo locally, run `npm install` at the repo root too (
 
 - Node 20.19+ (matches `@vitejs/plugin-react` / Vite 6 engine requirement)
 - Storybook 8.6.14+ (example uses `^8.6.14`)
-- storycap 5.0.1+
-- reg-suit 0.14.5+
+- (Bundled) storycap/reg-suit are included in `local-storybook-vrt`, no need to install in your project.
 - Vite 6+ (example uses `^6.0.11`, with `@vitejs/plugin-react` ^5.x)
 
 ## Usage
