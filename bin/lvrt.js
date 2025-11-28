@@ -48,7 +48,10 @@ async function main() {
   try {
     await captureBranch(baseBranch, baseDir, { checkout: false });
     await captureBranch(targetBranch, targetDir, { checkout: true });
-    await runRegSuit({ baseDir, targetDir, regRoot });
+    const reportPath = await runRegSuit({ baseDir, targetDir, regRoot });
+    if (reportPath) {
+      await openReport(reportPath);
+    }
     console.log("✅ reg-suit の結果を確認してください。");
   } catch (err) {
     console.error("エラーが発生しました:", err.message || err);
@@ -120,6 +123,13 @@ async function runRegSuit({ baseDir, targetDir, regRoot }) {
 
   await fs.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
   await runCommand("npx", ["reg-suit", "run", "--config", configPath], { stdio: "inherit" });
+  const report = path.join(regRoot, "index.html");
+  try {
+    await fs.access(report);
+    return report;
+  } catch {
+    return null;
+  }
 }
 
 function sanitizeBranchName(name) {
@@ -142,6 +152,22 @@ function runCommand(command, args, options = {}) {
       }
     });
   });
+}
+
+async function openReport(filePath) {
+  const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
+  const args =
+    opener === "open"
+      ? [filePath]
+      : opener === "cmd"
+      ? ["/c", "start", "", filePath]
+      : [filePath];
+  try {
+    await runCommand(opener, args, { stdio: "ignore" });
+    console.log(`🖥️ レポートをブラウザで開きます: ${filePath}`);
+  } catch (err) {
+    console.warn(`レポートを自動で開けませんでした: ${err.message || err}`);
+  }
 }
 
 main();
