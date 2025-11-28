@@ -13,25 +13,25 @@ const STORYCAP_OPTIONS = process.env.LVRT_STORYCAP_OPTIONS ? process.env.LVRT_ST
 async function main() {
   const targetBranch = process.argv[2];
   if (!targetBranch) {
-    console.error("使い方: lvrt <比較先ブランチ名>");
+    console.error("Usage: lvrt <target-branch>");
     process.exit(1);
   }
 
   const git = simpleGit();
   if (!(await git.checkIsRepo())) {
-    console.error("git リポジトリで実行してください。");
+    console.error("Please run this command inside a git repository.");
     process.exit(1);
   }
 
   const status = await git.status();
   const baseBranch = status.current;
   if (!baseBranch) {
-    console.error("現在のブランチを取得できませんでした。");
+    console.error("Failed to detect current branch.");
     process.exit(1);
   }
 
   if (status.files.length > 0) {
-    console.warn("⚠️ 作業ツリーに未コミットの変更があります。中断してから再実行してください。");
+    console.warn("⚠️ Uncommitted changes detected. Please commit or stash before running.");
   }
 
   await ensureBranchExists(targetBranch);
@@ -52,9 +52,9 @@ async function main() {
     if (reportPath) {
       await openReport(reportPath);
     }
-    console.log("✅ reg-suit の結果を確認してください。");
+    console.log("✅ reg-suit completed. Check the report above.");
   } catch (err) {
-    console.error("エラーが発生しました:", err.message || err);
+    console.error("An error occurred:", err.message || err);
     process.exitCode = 1;
   } finally {
     const current = (await git.status()).current;
@@ -105,7 +105,7 @@ async function waitForStorybook(port) {
     await delay(1500);
   }
 
-  throw new Error(`Storybook がポート ${port} で起動しませんでした: ${lastError?.message || "unknown"}`);
+  throw new Error(`Storybook did not start on port ${port}: ${lastError?.message || "unknown"}`);
 }
 
 async function runRegSuit({ baseDir, targetDir, regRoot }) {
@@ -167,9 +167,9 @@ async function openReport(filePath) {
       : [filePath];
   try {
     await runCommand(opener, args, { stdio: "ignore" });
-    console.log(`🖥️ レポートをブラウザで開きます: ${filePath}`);
+    console.log(`🖥️ Opening report in your browser: ${filePath}`);
   } catch (err) {
-    console.warn(`レポートを自動で開けませんでした: ${err.message || err}`);
+    console.warn(`Could not open report automatically: ${err.message || err}`);
   }
 }
 
