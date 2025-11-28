@@ -1,42 +1,49 @@
 # local-storybook-vrt
 
-ローカルの Storybook をブランチ間で起動し、storycap でキャプチャを取得、reg-suit で差分比較するための CLI です。  
-`lvrt <別ブランチ>` を実行すると、現在のブランチと指定ブランチのキャプチャを `.lvrt` 以下に保存し、そのまま reg-suit で比較します。
+CLI to run visual regression tests locally between two git branches by spinning up Storybook, capturing with storycap, and comparing with reg-suit.  
+`lsvrt <target-branch>` saves captures for the current branch and the target branch under `.lsvrt/` and runs reg-suit to compare them.
 
-## 必要環境
+## Requirements
 
 - Node.js 18+
-- git（ブランチ切り替えに使用）
-- ピア依存関係（各プロジェクトで devDependencies などに追加してください）
+- git (used to switch branches)
+- Peer dependencies (add to your project, e.g., devDependencies)
   - `storybook@^7`
   - `storycap@^3`
   - `reg-suit@^0.10`
 
-## インストール
+## Install
 
 ```bash
 npm i -D local-storybook-vrt
 ```
 
-## 使い方
+You can also install globally and run it inside a project that has the peer dependencies:
 
 ```bash
-lvrt <比較先ブランチ名>
+npm i -g local-storybook-vrt
+lsvrt <target-branch>    # run from your Storybook project root
 ```
 
-1. 現在のブランチの Storybook をポート 6006 で起動し、`storycap` で `.lvrt/capture/<現在ブランチ>` に保存します。
-2. 指定ブランチへ `git checkout` して同じ処理を行い、`.lvrt/capture/<指定ブランチ>` に保存します。
-3. `.lvrt/reg-work/regconfig.json` を生成し、`npx reg-suit run` を実行して差分を算出します。
-4. 処理後は元のブランチへ戻します。
+## Usage
 
-## 環境変数
+```bash
+lsvrt <target-branch>
+```
 
-- `LVRT_PORT`: Storybook の起動ポート（デフォルト `6006`）
-- `LVRT_STORYBOOK_COMMAND`: Storybook 起動コマンド（デフォルト `storybook dev`。例: `"start-storybook"`）
-- `LVRT_STORYCAP_OPTIONS`: `storycap` にそのまま渡す追加オプション（例: `"--serverTimeout 120000"`）
+1. Starts Storybook on port 6006 for the current branch, captures with `storycap` into `.lsvrt/capture/<current-branch>`.
+2. Checks out the target branch and captures into `.lsvrt/capture/<target-branch>`.
+3. Generates `.lsvrt/reg-work/regconfig.json` and runs `npx reg-suit run` to compare.
+4. Switches back to the original branch when finished.
 
-## メモ
+## Environment variables
 
-- `git` コマンドでブランチを切り替えるため、未コミットの変更がある場合は事前に退避してください。
-- Storybook は `npx storybook dev`（もしくは環境変数で上書き）で起動します。各プロジェクト側で Storybook・storycap・reg-suit がインストールされている必要があります。
-- キャプチャと reg-suit の作業ディレクトリは `.lvrt/` 配下にまとまります。必要に応じて `.gitignore` に登録してください。
+- `LSVRT_PORT`: Storybook port (default `6006`)
+- `LSVRT_STORYBOOK_COMMAND`: Storybook command (default `storybook dev`, e.g., `"start-storybook"`)
+- `LSVRT_STORYCAP_OPTIONS`: Extra options passed to `storycap` (e.g., `"--serverTimeout 120000"`)
+
+## Notes
+
+- Because branches are switched via `git`, stash or commit uncommitted changes beforehand.
+- Storybook is started via `npx storybook dev` (or override with env var). Ensure Storybook, storycap, and reg-suit are installed in your project.
+- Captures and reg-suit working files live under `.lsvrt/`; add to `.gitignore` as needed.

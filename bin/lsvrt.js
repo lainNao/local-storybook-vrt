@@ -6,39 +6,46 @@ import { once } from "events";
 import { setTimeout as delay } from "timers/promises";
 import simpleGit from "simple-git";
 
-const PORT = Number(process.env.LVRT_PORT || 6006);
-const STORYBOOK_COMMAND = (process.env.LVRT_STORYBOOK_COMMAND || "storybook dev").split(" ");
-const STORYCAP_OPTIONS = process.env.LVRT_STORYCAP_OPTIONS ? process.env.LVRT_STORYCAP_OPTIONS.split(" ") : [];
+const PORT = Number(process.env.LSVRT_PORT || 6006);
+const STORYBOOK_COMMAND = (
+  process.env.LSVRT_STORYBOOK_COMMAND || "storybook dev"
+).split(" ");
+const STORYCAP_OPTIONS = process.env.LSVRT_STORYCAP_OPTIONS
+  ? process.env.LSVRT_STORYCAP_OPTIONS.split(" ")
+  : [];
 
 async function main() {
   const targetBranch = process.argv[2];
   if (!targetBranch) {
-    console.error("使い方: lvrt <比較先ブランチ名>");
+    console.error("Usage: lsvrt <target-branch>");
     process.exit(1);
   }
 
   const git = simpleGit();
   if (!(await git.checkIsRepo())) {
-    console.error("git リポジトリで実行してください。");
+    console.error("Please run this command inside a git repository.");
     process.exit(1);
   }
 
   const status = await git.status();
   const baseBranch = status.current;
   if (!baseBranch) {
-    console.error("現在のブランチを取得できませんでした。");
+    console.error("Failed to detect current branch.");
     process.exit(1);
   }
 
   if (status.files.length > 0) {
-    console.warn("⚠️ 作業ツリーに未コミットの変更があります。中断してから再実行してください。");
+    console.warn(
+      "⚠️ Uncommitted changes detected. Please commit or stash before running."
+    );
+    process.exit(1);
   }
 
   await ensureBranchExists(targetBranch);
 
   const cwd = process.cwd();
-  const captureRoot = path.join(cwd, ".lvrt", "capture");
-  const regRoot = path.join(cwd, ".lvrt", "reg-work");
+  const captureRoot = path.join(cwd, ".lsvrt", "capture");
+  const regRoot = path.join(cwd, ".lsvrt", "reg-work");
   const baseDir = path.join(captureRoot, sanitizeBranchName(baseBranch));
   const targetDir = path.join(captureRoot, sanitizeBranchName(targetBranch));
 
@@ -52,9 +59,9 @@ async function main() {
     if (reportPath) {
       await openReport(reportPath);
     }
-    console.log("✅ reg-suit の結果を確認してください。");
+    console.log("✅ reg-suit completed. Check the report above.");
   } catch (err) {
-    console.error("エラーが発生しました:", err.message || err);
+    console.error("An error occurred:", err.message || err);
     process.exitCode = 1;
   } finally {
     const current = (await git.status()).current;
@@ -76,13 +83,23 @@ async function captureBranch(branch, outputDir, { checkout }) {
   await fs.rm(outputDir, { recursive: true, force: true });
   await fs.mkdir(outputDir, { recursive: true });
 
-  const storybook = spawn("npx", [...STORYBOOK_COMMAND, "-p", String(PORT), "--disable-telemetry", "--ci"], {
-    stdio: "inherit"
-  });
+  const storybook = spawn(
+    "npx",
+    [...STORYBOOK_COMMAND, "-p", String(PORT), "--disable-telemetry", "--ci"],
+    {
+      stdio: "inherit",
+    }
+  );
 
   try {
     await waitForStorybook(PORT);
-    await runCommand("npx", ["storycap", `http://localhost:${PORT}`, "--outDir", outputDir, ...STORYCAP_OPTIONS]);
+    await runCommand("npx", [
+      "storycap",
+      `http://localhost:${PORT}`,
+      "--outDir",
+      outputDir,
+      ...STORYCAP_OPTIONS,
+    ]);
   } finally {
     storybook.kill("SIGTERM");
     await once(storybook, "exit").catch(() => {});
@@ -105,7 +122,11 @@ async function waitForStorybook(port) {
     await delay(1500);
   }
 
-  throw new Error(`Storybook がポート ${port} で起動しませんでした: ${lastError?.message || "unknown"}`);
+  throw new Error(
+    `Storybook did not start on port ${port}: ${
+      lastError?.message || "unknown"
+    }`
+  );
 }
 
 async function runRegSuit({ baseDir, targetDir, regRoot }) {
@@ -116,13 +137,18 @@ async function runRegSuit({ baseDir, targetDir, regRoot }) {
       actualDir: baseDir,
       expectedDir: targetDir,
       thresholdRate: 0,
-      thresholdPixel: 0
+      thresholdPixel: 0,
     },
-    plugins: {}
+    plugins: {},
   };
 
   await fs.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
-  await runCommand("npx", ["reg-suit", "run", "--config", configPath], { stdio: "inherit" });
+  const expectedDir = path.join(regRoot, "expected");
+  await fs.rm(expectedDir, { recursive: true, force: true });
+  await fs.cp(targetDir, expectedDir, { recursive: true });
+  await runCommand("npx", ["reg-suit", "run", "--config", configPath], {
+    stdio: "inherit",
+  });
   const report = path.join(regRoot, "index.html");
   try {
     await fs.access(report);
@@ -148,14 +174,21 @@ function runCommand(command, args, options = {}) {
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`${command} ${args.join(" ")} failed with code ${code}`));
+        reject(
+          new Error(`${command} ${args.join(" ")} failed with code ${code}`)
+        );
       }
     });
   });
 }
 
 async function openReport(filePath) {
-  const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
+  const opener =
+    process.platform === "darwin"
+      ? "open"
+      : process.platform === "win32"
+      ? "cmd"
+      : "xdg-open";
   const args =
     opener === "open"
       ? [filePath]
@@ -164,9 +197,9 @@ async function openReport(filePath) {
       : [filePath];
   try {
     await runCommand(opener, args, { stdio: "ignore" });
-    console.log(`🖥️ レポートをブラウザで開きます: ${filePath}`);
+    console.log(`🖥️ Opening report in your browser: ${filePath}`);
   } catch (err) {
-    console.warn(`レポートを自動で開けませんでした: ${err.message || err}`);
+    console.warn(`Could not open report automatically: ${err.message || err}`);
   }
 }
 
