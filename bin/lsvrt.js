@@ -38,6 +38,7 @@ async function main() {
     console.warn(
       "⚠️ Uncommitted changes detected. Please commit or stash before running."
     );
+    process.exit(1);
   }
 
   await ensureBranchExists(targetBranch);
