@@ -18,13 +18,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_BIN_DIR = path.resolve(__dirname, "../node_modules/.bin");
 
 async function main() {
-  try {
-    await ensureRequiredBinaries();
-  } catch (err) {
-    console.error(err.message || err);
-    process.exit(1);
-  }
-
   const targetBranch = process.argv[2];
   if (!targetBranch) {
     console.error("Usage: lsvrt <target-branch>");
@@ -52,6 +45,12 @@ async function main() {
   }
 
   await ensureBranchExists(targetBranch);
+  try {
+    await ensureBinariesForBranches({ baseBranch, targetBranch });
+  } catch (err) {
+    console.error(err.message || err);
+    process.exit(1);
+  }
 
   const cwd = process.cwd();
   const captureRoot = path.join(cwd, ".lsvrt", "capture");
@@ -228,7 +227,7 @@ function* walkNodeModulesBin(startDir) {
   }
 }
 
-async function ensureRequiredBinaries() {
+async function ensureRequiredBinaries(contextLabel = "current branch") {
   const required = ["storycap", "reg-suit"];
   const missing = [];
 
@@ -242,10 +241,22 @@ async function ensureRequiredBinaries() {
   if (missing.length > 0) {
     const list = missing.join(", ");
     throw new Error(
-      `必要な CLI が見つかりませんでした: ${list}\n` +
+      `必要な CLI が見つかりませんでした (${contextLabel}): ${list}\n` +
         "カレントディレクトリから上位階層の node_modules/.bin および lsvrt パッケージ内を探索しました。\n" +
         "モノレポの場合はワークスペースのルートで依存をインストールし、再度実行してください。"
     );
+  }
+}
+
+async function ensureBinariesForBranches({ baseBranch, targetBranch }) {
+  await ensureRequiredBinaries(`branch ${baseBranch}`);
+  if (targetBranch === baseBranch) return;
+
+  await runGit(["checkout", targetBranch]);
+  try {
+    await ensureRequiredBinaries(`branch ${targetBranch}`);
+  } finally {
+    await runGit(["checkout", baseBranch]);
   }
 }
 
