@@ -1,0 +1,43 @@
+{
+  "name": "local-storybook-vrt",
+  "version": "0.1.0",
+  "description": "ローカル環境でブランチ間のStorybookビジュアルリグレッションテストを行うCLI",
+  "bin": {
+    "lvrt": "bin/lvrt.js"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "lint": "node --check bin/lvrt.js"
+  },
+  "keywords": [
+    "storybook",
+    "vrt",
+    "reg-suit",
+    "storycap",
+    "git"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "simple-git": "^3.22.0"
+  },
+  "peerDependencies": {
+    "reg-suit": ">=0.10.0",
+    "storycap": ">=3.0.0",
+    "storybook": ">=7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "reg-suit": {
+      "optional": false
+    },
+    "storycap": {
+      "optional": false
+    },
+    "storybook": {
+      "optional": false
+    }
+  }
+}
