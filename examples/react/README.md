@@ -16,9 +16,6 @@ If you work with this monorepo locally, run `npm install` at the repo root too (
 Before running VRT, create a branch, make a visible UI change, and commit it. Then compare the two branches:
 
 ```bash
-# Start Storybook
-npm run storybook
-
 # VRT: current branch vs target branch
 npx lsvrt <target-branch>
 ```
