@@ -43,3 +43,4 @@ lsvrt <target-branch>    # run from your Storybook project root
 - Because branches are switched via `git`, stash or commit uncommitted changes beforehand.
 - Storybook is started via `npx storybook dev` (or override with env var). Ensure Storybook is installed in your project.
 - Captures and reg-suit working files live under `.lsvrt/`; add to `.gitignore` as needed.
+- If it doesn't work properly in specific environments (such as monorepo configurations or custom Storybook setups), please open an issue with details about the situation.
