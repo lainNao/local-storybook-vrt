@@ -1,7 +1,7 @@
 {
   "name": "local-storybook-vrt",
-  "version": "0.1.1",
-  "description": "ローカル環境でブランチ間のStorybookビジュアルリグレッションテストを行うCLI",
+  "version": "0.2.0",
+  "description": "CLI for running Storybook visual regression tests between branches in a local environment",
   "bin": {
     "lsvrt": "bin/lsvrt.js"
   },
@@ -26,20 +26,14 @@
   },
   "license": "MIT",
   "dependencies": {
-    "simple-git": "^3.22.0"
+    "reg-suit": "^0.14.5",
+    "simple-git": "^3.22.0",
+    "storycap": "^5.0.1"
   },
   "peerDependencies": {
-    "reg-suit": ">=0.10.0",
-    "storycap": ">=3.0.0",
     "storybook": ">=7.0.0"
   },
   "peerDependenciesMeta": {
-    "reg-suit": {
-      "optional": false
-    },
-    "storycap": {
-      "optional": false
-    },
     "storybook": {
       "optional": false
     }
