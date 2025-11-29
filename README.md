@@ -37,6 +37,7 @@ lsvrt <target-branch>    # run from your Storybook project root
 - `LSVRT_PORT`: Storybook port (default `6006`)
 - `LSVRT_STORYBOOK_COMMAND`: Storybook command (default `storybook dev`, e.g., `"start-storybook"`)
 - `LSVRT_STORYCAP_OPTIONS`: Extra options passed to `storycap` (e.g., `"--serverTimeout 120000"`)
+- `LSVRT_THRESHOLD_RATE`: `reg-suit` `thresholdRate` (default `0.001`)
 
 ## Notes
 
