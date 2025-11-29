@@ -165,7 +165,15 @@ async function runRegCli({ baseDir, targetDir, regRoot }) {
     ...REGCLI_OPTIONS,
   ];
 
-  await runLocalBin("reg-cli", args, { stdio: "inherit" });
+  const exitCode = await runLocalBin("reg-cli", args, {
+    stdio: "inherit",
+    allowedExitCodes: [0, 1],
+  });
+  if (exitCode === 1) {
+    console.warn(
+      "reg-cli detected visual differences. Inspect the report or re-run with --update if changes are expected."
+    );
+  }
 
   try {
     await fs.access(reportPath);
@@ -278,12 +286,13 @@ async function ensureBinariesForBranches({ baseBranch, targetBranch }) {
 }
 
 function runCommand(command, args, options = {}) {
+  const { allowedExitCodes = [0], ...spawnOptions } = options;
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: "inherit", ...options });
+    const child = spawn(command, args, { stdio: "inherit", ...spawnOptions });
     child.on("error", reject);
     child.on("exit", (code) => {
-      if (code === 0) {
-        resolve();
+      if (code !== null && allowedExitCodes.includes(code)) {
+        resolve(code);
       } else {
         reject(
           new Error(`${command} ${args.join(" ")} failed with code ${code}`)
