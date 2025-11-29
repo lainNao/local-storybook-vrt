@@ -1,6 +1,6 @@
 {
   "name": "local-storybook-vrt",
-  "version": "0.3.1",
+  "version": "0.5.0",
   "description": "CLI for running Storybook visual regression tests between branches in a local environment",
   "bin": {
     "lsvrt": "bin/lsvrt.js"

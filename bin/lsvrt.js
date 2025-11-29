@@ -14,6 +14,9 @@ const STORYBOOK_COMMAND = (
 const STORYCAP_OPTIONS = process.env.LSVRT_STORYCAP_OPTIONS
   ? process.env.LSVRT_STORYCAP_OPTIONS.split(" ")
   : [];
+const REGSUIT_OPTIONS = process.env.LSVRT_REGSUIT_OPTIONS
+  ? process.env.LSVRT_REGSUIT_OPTIONS.split(" ")
+  : [];
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_BIN_DIR = path.resolve(__dirname, "../node_modules/.bin");
 
@@ -137,12 +140,16 @@ async function waitForStorybook(port) {
 
 async function runRegSuit({ baseDir, targetDir, regRoot }) {
   const configPath = path.join(regRoot, "regconfig.json");
+  const thresholdRate = parseThresholdRate(
+    process.env.LSVRT_THRESHOLD_RATE,
+    0.001
+  );
   const config = {
     core: {
       workingDir: regRoot,
       actualDir: baseDir,
       expectedDir: targetDir,
-      thresholdRate: 0,
+      thresholdRate,
       thresholdPixel: 0,
     },
     plugins: {},
@@ -152,9 +159,13 @@ async function runRegSuit({ baseDir, targetDir, regRoot }) {
   const expectedDir = path.join(regRoot, "expected");
   await fs.rm(expectedDir, { recursive: true, force: true });
   await fs.cp(targetDir, expectedDir, { recursive: true });
-  await runLocalBin("reg-suit", ["run", "--config", configPath], {
-    stdio: "inherit",
-  });
+  await runLocalBin(
+    "reg-suit",
+    ["run", "--config", configPath, ...REGSUIT_OPTIONS],
+    {
+      stdio: "inherit",
+    }
+  );
   const report = path.join(regRoot, "index.html");
   try {
     await fs.access(report);
@@ -241,11 +252,17 @@ async function ensureRequiredBinaries(contextLabel = "current branch") {
   if (missing.length > 0) {
     const list = missing.join(", ");
     throw new Error(
-      `必要な CLI が見つかりませんでした (${contextLabel}): ${list}\n` +
-        "カレントディレクトリから上位階層の node_modules/.bin および lsvrt パッケージ内を探索しました。\n" +
-        "モノレポの場合はワークスペースのルートで依存をインストールし、再度実行してください。"
+      `Required CLI binaries not found (${contextLabel}): ${list}\n` +
+        "Searched node_modules/.bin from the current directory upward and within the lsvrt package.\n" +
+        "In monorepos, install dependencies at the workspace root and try again."
     );
   }
+}
+
+function parseThresholdRate(value, defaultValue) {
+  if (value === undefined) return defaultValue;
+  const num = Number(value);
+  return Number.isFinite(num) && num >= 0 ? num : defaultValue;
 }
 
 async function ensureBinariesForBranches({ baseBranch, targetBranch }) {
