@@ -18,7 +18,7 @@ npm i -D local-storybook-vrt
 npx lsvrt <target-branch>
 
 # Example with custom settings:
-LSVRT_THRESHOLD_RATE="0.01" LSVRT_STORYCAP_OPTIONS="--delay 100 --stateChangeDelay 1500 --waitAssets --captureTimeout 60000" npx lsvrt <target-branch>
+LSVRT_REGCLI_OPTIONS="--thresholdRate 0.01" LSVRT_STORYCAP_OPTIONS="--delay 100 --stateChangeDelay 1500 --waitAssets --captureTimeout 60000" npx lsvrt <target-branch>
 ```
 
 You can also install globally and run it inside a project that has the peer dependencies:
@@ -40,8 +40,7 @@ lsvrt <target-branch>    # run from your Storybook project root
 - `LSVRT_PORT`: Storybook port (default `6006`)
 - `LSVRT_STORYBOOK_COMMAND`: Storybook command (default `storybook dev`, e.g., `"start-storybook"`)
 - `LSVRT_STORYCAP_OPTIONS`: Extra options passed to `storycap` (e.g., `"--serverTimeout 120000"`)
-- `LSVRT_THRESHOLD_RATE`: `reg-cli` `thresholdRate` (default `0.001`)
-- `LSVRT_REGCLI_OPTIONS`: Extra options passed to `reg-cli` (e.g., `"--update"`).
+- `LSVRT_REGCLI_OPTIONS`: Extra options passed to `reg-cli` (e.g., `"--update"`). If you want to change thresholds, pass `--thresholdRate`/`--thresholdPixel` here. Defaults are `0.001` and `0` if omitted.
 
 ## Notes
 

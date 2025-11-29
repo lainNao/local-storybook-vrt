@@ -139,10 +139,8 @@ async function waitForStorybook(port) {
 }
 
 async function runRegCli({ baseDir, targetDir, regRoot }) {
-  const thresholdRate = parseThresholdRate(
-    process.env.LSVRT_THRESHOLD_RATE,
-    0.001
-  );
+  const DEFAULT_THRESHOLD_RATE = 0.001;
+  const DEFAULT_THRESHOLD_PIXEL = 0;
   const diffDir = path.join(regRoot, "diff");
   const jsonPath = path.join(regRoot, "reg.json");
   const reportPath = path.join(regRoot, "index.html");
@@ -158,11 +156,10 @@ async function runRegCli({ baseDir, targetDir, regRoot }) {
     jsonPath,
     "--report",
     reportPath,
-    "--thresholdRate",
-    String(thresholdRate),
-    "--thresholdPixel",
-    "0",
-    ...REGCLI_OPTIONS,
+    ...applyThresholdDefaults(REGCLI_OPTIONS, {
+      thresholdRate: DEFAULT_THRESHOLD_RATE,
+      thresholdPixel: DEFAULT_THRESHOLD_PIXEL,
+    }),
   ];
 
   const exitCode = await runLocalBin("reg-cli", args, {
@@ -267,10 +264,27 @@ async function ensureRequiredBinaries(contextLabel = "current branch") {
   }
 }
 
-function parseThresholdRate(value, defaultValue) {
-  if (value === undefined) return defaultValue;
-  const num = Number(value);
-  return Number.isFinite(num) && num >= 0 ? num : defaultValue;
+function applyThresholdDefaults(options, defaults) {
+  const hasThresholdRate = hasFlag(options, ["--thresholdRate", "-T"]);
+  const hasThresholdPixel = hasFlag(options, ["--thresholdPixel", "-S"]);
+  const merged = [...options];
+
+  if (!hasThresholdRate) {
+    merged.push("--thresholdRate", String(defaults.thresholdRate));
+  }
+  if (!hasThresholdPixel) {
+    merged.push("--thresholdPixel", String(defaults.thresholdPixel));
+  }
+  return merged;
+}
+
+function hasFlag(options, names) {
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i];
+    if (names.includes(opt)) return true;
+    if (names.some((name) => opt.startsWith(`${name}=`))) return true;
+  }
+  return false;
 }
 
 async function ensureBinariesForBranches({ baseBranch, targetBranch }) {
