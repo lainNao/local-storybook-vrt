@@ -14,8 +14,8 @@ const STORYBOOK_COMMAND = (
 const STORYCAP_OPTIONS = process.env.LSVRT_STORYCAP_OPTIONS
   ? process.env.LSVRT_STORYCAP_OPTIONS.split(" ")
   : [];
-const REGSUIT_OPTIONS = process.env.LSVRT_REGSUIT_OPTIONS
-  ? process.env.LSVRT_REGSUIT_OPTIONS.split(" ")
+const REGCLI_OPTIONS = process.env.LSVRT_REGCLI_OPTIONS
+  ? process.env.LSVRT_REGCLI_OPTIONS.split(" ")
   : [];
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_BIN_DIR = path.resolve(__dirname, "../node_modules/.bin");
@@ -67,11 +67,11 @@ async function main() {
   try {
     await captureBranch(baseBranch, baseDir, { checkout: false });
     await captureBranch(targetBranch, targetDir, { checkout: true });
-    const reportPath = await runRegSuit({ baseDir, targetDir, regRoot });
+    const reportPath = await runRegCli({ baseDir, targetDir, regRoot });
     if (reportPath) {
       await openReport(reportPath);
     }
-    console.log("✅ reg-suit completed. Check the report above.");
+    console.log("✅ reg-cli completed. Check the report above.");
   } catch (err) {
     console.error("An error occurred:", err.message || err);
     process.exitCode = 1;
@@ -138,38 +138,38 @@ async function waitForStorybook(port) {
   );
 }
 
-async function runRegSuit({ baseDir, targetDir, regRoot }) {
-  const configPath = path.join(regRoot, "regconfig.json");
+async function runRegCli({ baseDir, targetDir, regRoot }) {
   const thresholdRate = parseThresholdRate(
     process.env.LSVRT_THRESHOLD_RATE,
     0.001
   );
-  const config = {
-    core: {
-      workingDir: regRoot,
-      actualDir: baseDir,
-      expectedDir: targetDir,
-      thresholdRate,
-      thresholdPixel: 0,
-    },
-    plugins: {},
-  };
+  const diffDir = path.join(regRoot, "diff");
+  const jsonPath = path.join(regRoot, "reg.json");
+  const reportPath = path.join(regRoot, "index.html");
 
-  await fs.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
-  const expectedDir = path.join(regRoot, "expected");
-  await fs.rm(expectedDir, { recursive: true, force: true });
-  await fs.cp(targetDir, expectedDir, { recursive: true });
-  await runLocalBin(
-    "reg-suit",
-    ["run", "--config", configPath, ...REGSUIT_OPTIONS],
-    {
-      stdio: "inherit",
-    }
-  );
-  const report = path.join(regRoot, "index.html");
+  await fs.rm(diffDir, { recursive: true, force: true });
+  await fs.mkdir(diffDir, { recursive: true });
+
+  const args = [
+    baseDir,
+    targetDir,
+    diffDir,
+    "--json",
+    jsonPath,
+    "--report",
+    reportPath,
+    "--thresholdRate",
+    String(thresholdRate),
+    "--thresholdPixel",
+    "0",
+    ...REGCLI_OPTIONS,
+  ];
+
+  await runLocalBin("reg-cli", args, { stdio: "inherit" });
+
   try {
-    await fs.access(report);
-    return report;
+    await fs.access(reportPath);
+    return reportPath;
   } catch {
     return null;
   }
@@ -239,7 +239,7 @@ function* walkNodeModulesBin(startDir) {
 }
 
 async function ensureRequiredBinaries(contextLabel = "current branch") {
-  const required = ["storycap", "reg-suit"];
+  const required = ["storycap", "reg-cli"];
   const missing = [];
 
   for (const bin of required) {
