@@ -15,7 +15,7 @@
   "keywords": [
     "storybook",
     "vrt",
-    "reg-suit",
+    "reg-cli",
     "storycap",
     "git"
   ],
@@ -26,7 +26,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "reg-suit": "^0.14.5",
+    "reg-cli": "^0.18.13",
     "simple-git": "^3.22.0",
     "storycap": "^5.0.1"
   },
