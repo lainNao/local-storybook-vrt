@@ -16,6 +16,9 @@ CLI to run visual regression tests locally between two git branches by spinning 
 ```bash
 npm i -D local-storybook-vrt
 npx lsvrt <target-branch>
+
+# Example with custom settings:
+LSVRT_THRESHOLD_RATE="0.01" LSVRT_STORYCAP_OPTIONS="--delay 100 --stateChangeDelay 1500 --waitAssets --captureTimeout 60000" npx lsvrt <target-branch>
 ```
 
 You can also install globally and run it inside a project that has the peer dependencies:
@@ -38,6 +41,7 @@ lsvrt <target-branch>    # run from your Storybook project root
 - `LSVRT_STORYBOOK_COMMAND`: Storybook command (default `storybook dev`, e.g., `"start-storybook"`)
 - `LSVRT_STORYCAP_OPTIONS`: Extra options passed to `storycap` (e.g., `"--serverTimeout 120000"`)
 - `LSVRT_THRESHOLD_RATE`: `reg-suit` `thresholdRate` (default `0.001`)
+- `LSVRT_REGSUIT_OPTIONS`: Extra options passed to `reg-suit run` (e.g., `"--actualDir tmp/actual"`). `--config` is already provided by lsvrt.
 
 ## Notes
 
@@ -45,3 +49,4 @@ lsvrt <target-branch>    # run from your Storybook project root
 - Storybook is started via `npx storybook dev` (or override with env var). Ensure Storybook is installed in your project.
 - Captures and reg-suit working files live under `.lsvrt/`; add to `.gitignore` as needed.
 - If it doesn't work properly in specific environments (such as monorepo configurations or custom Storybook setups), please open an issue with details about the situation.
+- Add `.lsvrt` to your `.gitignore` to avoid committing captures and reg-suit work files.

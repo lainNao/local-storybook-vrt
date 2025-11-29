@@ -14,6 +14,9 @@ const STORYBOOK_COMMAND = (
 const STORYCAP_OPTIONS = process.env.LSVRT_STORYCAP_OPTIONS
   ? process.env.LSVRT_STORYCAP_OPTIONS.split(" ")
   : [];
+const REGSUIT_OPTIONS = process.env.LSVRT_REGSUIT_OPTIONS
+  ? process.env.LSVRT_REGSUIT_OPTIONS.split(" ")
+  : [];
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_BIN_DIR = path.resolve(__dirname, "../node_modules/.bin");
 
@@ -156,9 +159,13 @@ async function runRegSuit({ baseDir, targetDir, regRoot }) {
   const expectedDir = path.join(regRoot, "expected");
   await fs.rm(expectedDir, { recursive: true, force: true });
   await fs.cp(targetDir, expectedDir, { recursive: true });
-  await runLocalBin("reg-suit", ["run", "--config", configPath], {
-    stdio: "inherit",
-  });
+  await runLocalBin(
+    "reg-suit",
+    ["run", "--config", configPath, ...REGSUIT_OPTIONS],
+    {
+      stdio: "inherit",
+    }
+  );
   const report = path.join(regRoot, "index.html");
   try {
     await fs.access(report);
